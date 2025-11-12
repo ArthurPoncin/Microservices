@@ -143,5 +143,3 @@ Chaque **Bounded Context** représente une zone métier cohérente avec ses enti
 | Bénéfices | Cohérence, évolutivité, découplage, clarté |
 
 ---
-
-© Réponse structurée — Application DDD pour plateforme d’événements.
