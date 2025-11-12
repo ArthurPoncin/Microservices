@@ -18,7 +18,6 @@
 
 ## 2) Bounded Contexts — responsabilités, entités principales et interactions
 
-> Objectif : rester dans l’**Ubiquitous Language** (métier), sans détails techniques.
 
 | Contexte | Responsabilité principale | Entités clés | Interactions (métier) | Règles principales |
 |---|---|---|---|---|
