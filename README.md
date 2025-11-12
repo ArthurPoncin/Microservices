@@ -1,6 +1,6 @@
 # Microservices
 
-# Réponse au TP Domain Driven Design — Plateforme d’Événements
+# TP Domain Driven Design — Plateforme d’Événements
 
 ## 0. Périmètre fonctionnel
 
