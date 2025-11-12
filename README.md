@@ -1,7 +1,5 @@
 # TP Domain Driven Design — Plateforme d’Événements
 
-> **1)** Domaines & sous-domaines • **2)** Bounded Contexts (responsabilités, entités, interactions) • **3)** Microservices (nom, responsabilité, données, interfaces) • **4)** Présentation synthétique
-
 ---
 
 ## 1) Analyse des domaines et sous-domaines fonctionnels
