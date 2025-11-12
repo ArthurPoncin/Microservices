@@ -1,114 +1,84 @@
-# Microservices
-
 # TP Domain Driven Design — Plateforme d’Événements
 
-## 0. Périmètre fonctionnel
-
-La plateforme doit couvrir le cycle de vie complet d’un événement :
-- Création, modification, suppression.
-- Inscriptions, validation, annulation, listes d’attente.
-- Sessions et intervenants.
-- Paiement pour les événements payants.
-- Génération automatique de factures et reçus.
-- Envoi d’emails automatiques (confirmation, rappel, annulation).
-- Notifications ciblées.
-- Statistiques (participants, revenus, taux de remplissage).
+> **1)** Domaines & sous-domaines • **2)** Bounded Contexts (responsabilités, entités, interactions) • **3)** Microservices (nom, responsabilité, données, interfaces) • **4)** Présentation synthétique
 
 ---
 
-## 1. Domaines et sous-domaines
+## 1) Analyse des domaines et sous-domaines fonctionnels
 
-| Domaine | Description |
-|----------|--------------|
-| **Gestion des événements** | Création, modification, publication, fermeture des inscriptions. |
-| **Inscriptions et capacités** | Gestion des demandes, annulations, listes d’attente. |
-| **Programme & Intervenants** | Sessions, créneaux, intervenants, salles. |
-| **Paiement** | Traitement des paiements en ligne. |
-| **Facturation & Reçus** | Génération automatique de documents comptables. |
-| **Notifications & Emails** | Envois automatiques et ciblés. |
-| **Statistiques** | Agrégation de données analytiques. |
-
----
-
-## 2. Définition des Bounded Contexts — Vue d’ensemble (Langage Métier)
-
-| **Contexte** | **Responsabilité principale** | **Entités clés** | **Interactions** | **Règles principales** |
-|---------------|-------------------------------|------------------|-------------------------------------------|------------------------|
-| **Gestion des Événements** | Gérer le cycle de vie des événements : création, modification, publication, fermeture des inscriptions. | Événement, Organisateur | • Lorsqu’un événement est publié, il devient visible et les inscriptions peuvent s’ouvrir.<br>• Lorsqu’il est modifié (date, lieu, description), les inscriptions, le programme et les notifications doivent être mis à jour.<br>• Lorsqu’il est fermé, plus aucune inscription n’est possible. | • Un événement ne peut être publié que s’il possède une date, un lieu et une capacité valides.<br>• Un événement publié ne peut être supprimé. |
-| **Inscriptions** | Gérer les demandes d’inscription, confirmations, annulations et listes d’attente. | Inscription, Participant, Liste d’attente | • Lorsqu’un événement est publié, les inscriptions peuvent s’ouvrir.<br>• Quand la capacité est atteinte, les nouvelles demandes sont placées sur liste d’attente.<br>• Lorsqu’un participant annule, le premier de la liste obtient une place.<br>• Lorsqu’un paiement est confirmé, l’inscription devient « confirmée ». | • Une inscription confirmée occupe une place.<br>• Une annulation libère une place.<br>• Une même personne ne peut pas s’inscrire deux fois au même événement. |
-| **Paiement** | Gérer les paiements pour les événements payants. | Paiement, Montant dû | • Lorsqu’une inscription payante est créée, un paiement est attendu.<br>• Lorsqu’un paiement est validé, l’inscription correspondante est confirmée et la facturation est déclenchée.<br>• Lorsqu’un paiement échoue, le participant en est informé. | • Le paiement doit couvrir le montant exact dû.<br>• Un paiement validé ne peut pas être modifié, seulement annulé selon les règles de remboursement. |
-| **Facturation** | Produire les documents comptables liés aux paiements (factures, reçus). | Facture, Reçu | • Lorsqu’un paiement est validé, une facture est automatiquement générée.<br>• Les participants reçoivent une copie de leur facture ou un reçu.<br>• Les factures alimentent les statistiques financières. | • Une facture émise ne peut pas être modifiée.<br>• En cas d’erreur, un avoir doit être généré.<br>• Chaque facture possède un numéro unique. |
-| **Programme & Intervenants** | Organiser les sessions, ateliers et intervenants associés aux événements. | Session, Intervenant | • Lorsqu’un événement est publié, les sessions peuvent être planifiées.<br>• Lorsqu’une session est modifiée ou annulée, les participants concernés doivent être informés.<br>• Les inscriptions peuvent être liées à des sessions spécifiques. | • Un intervenant ne peut être associé qu’à des événements publiés.<br>• Une session ne peut pas se chevaucher avec une autre dans la même salle. |
-| **Notifications** | Informer automatiquement les participants et organisateurs selon les actions de la plateforme. | Notification, Modèle de message | • Lorsqu’une inscription est confirmée ou annulée, une notification est envoyée.<br>• Lorsqu’un programme change, seuls les participants concernés sont avertis.<br>• Lorsqu’une facture est disponible, le participant reçoit une notification avec le lien. | • Chaque notification doit être envoyée une seule fois.<br>• Les messages doivent être clairs et validés avant envoi. |
-| **Statistiques** | Fournir une vision d’ensemble de l’activité : participation, taux de remplissage, revenus. | Indicateur, Rapport statistique | • Les inscriptions, paiements et annulations alimentent les indicateurs.<br>• Les organisateurs peuvent consulter les statistiques de leurs événements.<br>• Les données de facturation permettent de calculer le chiffre d’affaires. | • Les statistiques reposent uniquement sur des inscriptions confirmées et paiements validés.<br>• Les rapports doivent être cohérents et actualisés. |
+| Domaine | Sous‑domaines | Description (langage métier) |
+|---|---|---|
+| **Gestion des événements** | Définition, Publication, Fermeture des inscriptions | Créer et administrer les événements (titre, dates, lieu, capacité, statut), décider de l’ouverture/fermeture des inscriptions. |
+| **Inscriptions** | Demandes, Validation/Annulation, Liste d’attente, Capacité | Prendre les demandes d’inscription, confirmer/annuler, gérer la file d’attente lorsque la capacité est atteinte. |
+| **Programme** | Sessions, Intervenants | Organiser le contenu d’un événement : sessions/ateliers, créneaux, salles, intervenants. |
+| **Paiement** | Intention, Validation/Échec | Permettre le règlement des événements payants et refléter l’état du paiement. |
+| **Facturation** | Factures, Reçus | Émettre les documents comptables liés aux paiements validés. |
+| **Notifications** | Courriels, Alertes ciblées | Informer automatiquement participants et organisateurs (confirmation, rappel, annulation, changement de programme). |
+| **Statistiques** | Indicateurs, Rapports | Mesurer l’activité : participation, taux de remplissage, revenus, tableaux de bord. |
 
 ---
 
+## 2) Bounded Contexts — responsabilités, entités principales et interactions
 
-## 3. Microservices proposés
+> Objectif : rester dans l’**Ubiquitous Language** (métier), sans détails techniques.
 
-| Microservice | Rôle principal | API principale |
-|---------------|----------------|----------------|
-| **Event Catalog Service** | CRUD et publication d’événements | `/events`, `/events/{id}/publish` |
-| **Program Service** | Sessions, intervenants | `/events/{id}/sessions` |
-| **Registration Service** | Inscriptions, files d’attente | `/registrations` |
-| **Payment Service** | Paiement en ligne | `/payments/intents` |
-| **Billing Service** | Factures, reçus | `/invoices`, `/receipts` |
-| **Notification Service** | Emails, notifications ciblées | `/notifications` |
-| **Analytics Service** | Statistiques, KPIs | `/analytics` |
-
----
-
-## 4. Scénarios d’interaction
-
-### A. Inscription payante avec facture
-1. Le front envoie une demande d’inscription.
-2. `Registration` crée la demande → état `pending`.
-3. `Payment` traite le paiement → `PaymentSucceeded`.
-4. `Registration` confirme la place → `RegistrationConfirmed`.
-5. `Billing` émet une facture → `InvoiceIssued`.
-6. `Notification` envoie l’email de confirmation.
-7. `Analytics` met à jour les données.
-
-### B. Liste d’attente
-- Si capacité atteinte → `Waitlisted`.
-- À l’annulation → promotion automatique → `PromotedFromWaitlist`.
-
-### C. Changement de programme
-- `ProgramChanged` déclenche `Notification` ciblée aux inscrits concernés.
+| Contexte | Responsabilité principale | Entités clés | Interactions (métier) | Règles principales |
+|---|---|---|---|---|
+| **Gestion des Événements** | Gérer le cycle de vie des événements (création, modification, publication, fermeture des inscriptions). | *Événement*, *Organisateur* | Quand un événement est **publié**, il devient visible et inscriptible. Quand il est **modifié** (dates/lieu), **Inscriptions**, **Programme** et **Notifications** sont informés. En **fermeture**, plus d’inscriptions. | Publication possible seulement si dates/lieu/capacité valides. Un événement publié ne peut pas être supprimé. |
+| **Inscriptions** | Prendre les demandes, gérer la capacité, confirmer/annuler, maintenir la liste d’attente. | *Inscription*, *Participant*, *Liste d’attente* | Publication d’un événement → inscriptions ouvertes. Capacité atteinte → nouvelles demandes en attente. Annulation → promotion du premier en file. Paiement validé (si payant) → inscription confirmée. | Une inscription confirmée occupe une place. Une annulation libère une place. Pas de doublon pour un même participant/événement. |
+| **Programme** | Organiser sessions/ateliers et intervenants de chaque événement. | *Session*, *Intervenant* | Publication d’un événement → planification possible. Changement/annulation de session → **Notifications** ciblées aux participants concernés. | Pas de chevauchement de sessions dans une même salle. Un intervenant n’est associé qu’à des événements publiés. |
+| **Paiement** | Permettre le règlement des inscriptions d’événements payants. | *Paiement*, *Montant dû* | Inscription payante créée → paiement attendu. Paiement **validé** → **Inscriptions** confirme la place et **Facturation** émet la facture. Paiement **échoué** → participant informé. | Le paiement couvre le montant dû. Un paiement validé n’est plus modifiable (politique d’annulation/remboursement dédiée). |
+| **Facturation** | Produire et mettre à disposition les factures et reçus associés aux paiements. | *Facture*, *Reçu* | Paiement **validé** → émission d’une facture/du reçu et mise à disposition. **Notifications** informe le participant. **Statistiques** consolident les montants. | Facture immuable après émission ; corrections via avoir. Numérotation unique. |
+| **Notifications** | Informer automatiquement (confirmation, rappel, annulation, changement de programme) et effectuer des envois ciblés. | *Notification*, *Modèle de message* | Confirmation/annulation d’inscription → message au participant. Changement de programme → message uniquement aux concernés. Facture disponible → message avec lien. | Un envoi par événement déclencheur. Modèles validés, messages clairs. |
+| **Statistiques** | Fournir des indicateurs consolidés et des rapports. | *Indicateur*, *Rapport statistique* | Consomme inscriptions confirmées/annulations/paiements/factures/événements/programme pour calculer les KPIs. Rapports consultables par organisateurs. | Comptage basé sur données validées (inscriptions confirmées, paiements réussis). Cohérence temporelle des indicateurs. |
 
 ---
 
-## 5. Règles métier (invariants)
+## 3) Découpage en microservices
 
-| Entité | Invariants |
-|--------|-------------|
-| **Event** | Dates cohérentes, transitions de statut valides. |
-| **Session** | Pas de chevauchement salle/créneau. |
-| **Registration** | 1 place confirmée = 1 siège, annulation libère. |
-| **Payment** | Idempotence sur webhooks. |
-| **Invoice** | Immuable, annulée via avoir. |
+> Découpage aligné sur les contexts. Chaque service **possède** ses données et expose des interfaces claires.  
+> Intégration de votre proposition (`EventService`, `RegistrationService`, etc.), harmonisée en langage fonctionnel.
+
+| Microservice (nom clair) | Responsabilité principale | Données principales (propriété) | Interfaces exposées (API) / Interactions |
+|---|---|---|---|
+| **EventService** | Gérer le catalogue d’événements : création, mise à jour, publication, fermeture des inscriptions. | **Événements** (id, titre, dates, lieu, capacité, statut), fenêtres d’inscription. | `POST /events` • `PUT /events/{id}` • `GET /events/{id}` • **Publie :** `event.created`, `event.updated`, `event.published`, `event.closed` |
+| **RegistrationService** | Gérer inscriptions et listes d’attente ; garantir la capacité. | **Inscriptions** (id, eventId, participantId/email, statut), **ListesAttente** (rang), registre de capacité. | `POST /events/{eventId}/register` • `POST /registrations/{regId}/cancel` • `GET /events/{eventId}/attendees` • **Écoute :** `event.created|published|closed` • **Publie :** `registration.confirmed|cancelled|waitlisted|promoted` • **Appelle :** *PaymentService* (si payant) |
+| **AgendaService** | Organiser sessions et intervenants pour chaque événement. | **Sessions** (id, eventId, titre, horaire, salle, capacité), **Intervenants**. | `POST /events/{eventId}/sessions` • `PUT /sessions/{sessionId}` • `GET /events/{eventId}/agenda` • **Publie :** `agenda.updated` • **Écoute :** `event.published|updated` |
+| **PaymentService** | Traiter les paiements des inscriptions payantes. | **Transactions** (id, registrationId, montant, devise, statut, référence PSP). | `POST /payments` (interne) • Webhook prestataire • **Publie :** `payment.succeeded`, `payment.failed` |
+| **BillingService** | Générer et archiver les documents comptables. | **Factures** (id, userId, registrationId, montant, date, numéro, lienPDF), **Reçus**. | `GET /invoices/{invoiceId}` • `GET /users/{userId}/invoices` • **Écoute :** `payment.succeeded` • **Publie :** `invoice.issued` |
+| **NotificationService** | Envoyer emails et alertes ciblées (confirmation, annulation, rappels, changements). | **Templates**, **Messages envoyés** (journal). | `POST /notifications/send` (interne) • **Écoute :** `registration.confirmed|cancelled`, `event.cancelled|updated`, `agenda.updated`, `invoice.issued` |
+| **AnalyticsService** | Produire indicateurs et tableaux de bord. | **EventStats** (modèle de lecture dénormalisé : participants, revenus, taux de remplissage). | `GET /analytics/events/{eventId}/stats` • `GET /analytics/dashboard` • **Écoute :** `registration.confirmed|cancelled`, `payment.succeeded`, `invoice.issued`, `event.*`, `agenda.updated` |
+
+> Remarques d’alignement :  
+> • Les noms de messages d’interaction restent indicatifs (langage domaine).  
+> • Chaque service est **déployable indépendamment** et possède sa **propre base** (ownership strict).  
+> • Les interfaces sont décrites côté **contrat** ; la technique (HTTP, messages) reste implicite.
+
+---
+
+## 4) Présentez votre travail à la classe (plan synthétique prêt à projeter)
+
+### Slide 1 — Problème métier & Périmètre
+- De l’idée d’un événement à sa mesure d’impact : *créer → publier → s’inscrire → payer → facturer → informer → mesurer*.
+
+### Slide 2 — Domaines & Sous‑domaines
+- Tableau récapitulatif (7 domaines) et frontières fonctionnelles.
+
+### Slide 3 — Bounded Contexts (Ubiquitous Language)
+- 6–7 contexts avec responsabilités, entités métier, interactions **métier** (sans technique).
+
+### Slide 4 — Microservices alignés
+- Tableau “Service • Rôle • Données • Interfaces/Interactions” (reprend Event/Registration/Agenda/Payment/Billing/Notification/Analytics).
+
+### Slide 5 — Scénarios clés
+- *Inscription payante → paiement validé → facture émise → notification envoyée.*  
+- *Capacité atteinte → liste d’attente → annulation → promotion automatique.*  
+- *Changement de programme → notification ciblée.*
+
+### Slide 6 — Règles et bénéfices
+- Invariants (capacité, immutabilité facture, pas de doublons).  
+- Bénéfices : clarté métier, découplage, évolutivité, lisibilité des responsabilités.
 
 ---
 
-## 6. Avantages du découpage
-
-- Alignement fort **métier ↔ code**.  
-- **Évolutivité ciblée** (paiement, emails).  
-- **Résilience** : chaque service isolé.  
-- **Lisibilité** du modèle métier.  
-- Prépare une architecture **microservices** claire et extensible.
-
----
-
-## 7. Synthèse
-
-| Élément | Détail |
-|----------|--------|
-| Domaines | Catalog, Program, Registration, Payment, Billing, Notifications, Analytics |
-| Architecture | Un microservice par contexte borné |
-| Communication | API REST + événements asynchrones |
-| Données | Une base par service |
-| Bénéfices | Cohérence, évolutivité, découplage, clarté |
-
----
+_Fin du rendu._
