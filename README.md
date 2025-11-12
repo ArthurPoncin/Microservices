@@ -44,10 +44,6 @@ La plateforme doit couvrir le cycle de vie complet d’un événement :
 
 ---
 
-> Cette vue d’ensemble exprime les **frontières fonctionnelles** et les **relations métier** entre les différents contextes, sans mention technique (API, messages, bases de données, etc.).  
-> Elle sert de base pour comprendre le modèle conceptuel du domaine et établir un **langage commun** entre développeurs et experts métier.
-
----
 
 ## 3. Microservices proposés
 
