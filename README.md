@@ -32,7 +32,7 @@ La plateforme doit couvrir le cycle de vie complet d’un événement :
 
 ## 2. Définition des Bounded Contexts — Vue d’ensemble (Langage Métier)
 
-| **Contexte** | **Responsabilité principale** | **Entités clés** | **Interactions (métier, non techniques)** | **Règles principales** |
+| **Contexte** | **Responsabilité principale** | **Entités clés** | **Interactions** | **Règles principales** |
 |---------------|-------------------------------|------------------|-------------------------------------------|------------------------|
 | **Gestion des Événements** | Gérer le cycle de vie des événements : création, modification, publication, fermeture des inscriptions. | Événement, Organisateur | • Lorsqu’un événement est publié, il devient visible et les inscriptions peuvent s’ouvrir.<br>• Lorsqu’il est modifié (date, lieu, description), les inscriptions, le programme et les notifications doivent être mis à jour.<br>• Lorsqu’il est fermé, plus aucune inscription n’est possible. | • Un événement ne peut être publié que s’il possède une date, un lieu et une capacité valides.<br>• Un événement publié ne peut être supprimé. |
 | **Inscriptions** | Gérer les demandes d’inscription, confirmations, annulations et listes d’attente. | Inscription, Participant, Liste d’attente | • Lorsqu’un événement est publié, les inscriptions peuvent s’ouvrir.<br>• Quand la capacité est atteinte, les nouvelles demandes sont placées sur liste d’attente.<br>• Lorsqu’un participant annule, le premier de la liste obtient une place.<br>• Lorsqu’un paiement est confirmé, l’inscription devient « confirmée ». | • Une inscription confirmée occupe une place.<br>• Une annulation libère une place.<br>• Une même personne ne peut pas s’inscrire deux fois au même événement. |
