@@ -33,9 +33,6 @@
 
 ## 3) Découpage en microservices
 
-> Découpage aligné sur les contexts. Chaque service **possède** ses données et expose des interfaces claires.  
-> Intégration de votre proposition (`EventService`, `RegistrationService`, etc.), harmonisée en langage fonctionnel.
-
 | Microservice (nom clair) | Responsabilité principale | Données principales (propriété) | Interfaces exposées (API) / Interactions |
 |---|---|---|---|
 | **EventService** | Gérer le catalogue d’événements : création, mise à jour, publication, fermeture des inscriptions. | **Événements** (id, titre, dates, lieu, capacité, statut), fenêtres d’inscription. | `POST /events` • `PUT /events/{id}` • `GET /events/{id}` • **Publie :** `event.created`, `event.updated`, `event.published`, `event.closed` |
@@ -45,10 +42,5 @@
 | **BillingService** | Générer et archiver les documents comptables. | **Factures** (id, userId, registrationId, montant, date, numéro, lienPDF), **Reçus**. | `GET /invoices/{invoiceId}` • `GET /users/{userId}/invoices` • **Écoute :** `payment.succeeded` • **Publie :** `invoice.issued` |
 | **NotificationService** | Envoyer emails et alertes ciblées (confirmation, annulation, rappels, changements). | **Templates**, **Messages envoyés** (journal). | `POST /notifications/send` (interne) • **Écoute :** `registration.confirmed|cancelled`, `event.cancelled|updated`, `agenda.updated`, `invoice.issued` |
 | **AnalyticsService** | Produire indicateurs et tableaux de bord. | **EventStats** (modèle de lecture dénormalisé : participants, revenus, taux de remplissage). | `GET /analytics/events/{eventId}/stats` • `GET /analytics/dashboard` • **Écoute :** `registration.confirmed|cancelled`, `payment.succeeded`, `invoice.issued`, `event.*`, `agenda.updated` |
-
-> Remarques d’alignement :  
-> • Les noms de messages d’interaction restent indicatifs (langage domaine).  
-> • Chaque service est **déployable indépendamment** et possède sa **propre base** (ownership strict).  
-> • Les interfaces sont décrites côté **contrat** ; la technique (HTTP, messages) reste implicite.
 
 ---
