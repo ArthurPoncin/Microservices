@@ -30,49 +30,22 @@ La plateforme doit couvrir le cycle de vie complet d’un événement :
 
 ---
 
-## 2. Bounded Contexts (BC)
+## 2. Définition des Bounded Contexts — Vue d’ensemble (Langage Métier)
 
-Chaque **Bounded Context** représente une zone métier cohérente avec ses entités, règles et API.
+| **Contexte** | **Responsabilité principale** | **Entités clés** | **Interactions (métier, non techniques)** | **Règles principales** |
+|---------------|-------------------------------|------------------|-------------------------------------------|------------------------|
+| **Gestion des Événements** | Gérer le cycle de vie des événements : création, modification, publication, fermeture des inscriptions. | Événement, Organisateur | • Lorsqu’un événement est publié, il devient visible et les inscriptions peuvent s’ouvrir.<br>• Lorsqu’il est modifié (date, lieu, description), les inscriptions, le programme et les notifications doivent être mis à jour.<br>• Lorsqu’il est fermé, plus aucune inscription n’est possible. | • Un événement ne peut être publié que s’il possède une date, un lieu et une capacité valides.<br>• Un événement publié ne peut être supprimé. |
+| **Inscriptions** | Gérer les demandes d’inscription, confirmations, annulations et listes d’attente. | Inscription, Participant, Liste d’attente | • Lorsqu’un événement est publié, les inscriptions peuvent s’ouvrir.<br>• Quand la capacité est atteinte, les nouvelles demandes sont placées sur liste d’attente.<br>• Lorsqu’un participant annule, le premier de la liste obtient une place.<br>• Lorsqu’un paiement est confirmé, l’inscription devient « confirmée ». | • Une inscription confirmée occupe une place.<br>• Une annulation libère une place.<br>• Une même personne ne peut pas s’inscrire deux fois au même événement. |
+| **Paiement** | Gérer les paiements pour les événements payants. | Paiement, Montant dû | • Lorsqu’une inscription payante est créée, un paiement est attendu.<br>• Lorsqu’un paiement est validé, l’inscription correspondante est confirmée et la facturation est déclenchée.<br>• Lorsqu’un paiement échoue, le participant en est informé. | • Le paiement doit couvrir le montant exact dû.<br>• Un paiement validé ne peut pas être modifié, seulement annulé selon les règles de remboursement. |
+| **Facturation** | Produire les documents comptables liés aux paiements (factures, reçus). | Facture, Reçu | • Lorsqu’un paiement est validé, une facture est automatiquement générée.<br>• Les participants reçoivent une copie de leur facture ou un reçu.<br>• Les factures alimentent les statistiques financières. | • Une facture émise ne peut pas être modifiée.<br>• En cas d’erreur, un avoir doit être généré.<br>• Chaque facture possède un numéro unique. |
+| **Programme & Intervenants** | Organiser les sessions, ateliers et intervenants associés aux événements. | Session, Intervenant | • Lorsqu’un événement est publié, les sessions peuvent être planifiées.<br>• Lorsqu’une session est modifiée ou annulée, les participants concernés doivent être informés.<br>• Les inscriptions peuvent être liées à des sessions spécifiques. | • Un intervenant ne peut être associé qu’à des événements publiés.<br>• Une session ne peut pas se chevaucher avec une autre dans la même salle. |
+| **Notifications** | Informer automatiquement les participants et organisateurs selon les actions de la plateforme. | Notification, Modèle de message | • Lorsqu’une inscription est confirmée ou annulée, une notification est envoyée.<br>• Lorsqu’un programme change, seuls les participants concernés sont avertis.<br>• Lorsqu’une facture est disponible, le participant reçoit une notification avec le lien. | • Chaque notification doit être envoyée une seule fois.<br>• Les messages doivent être clairs et validés avant envoi. |
+| **Statistiques** | Fournir une vision d’ensemble de l’activité : participation, taux de remplissage, revenus. | Indicateur, Rapport statistique | • Les inscriptions, paiements et annulations alimentent les indicateurs.<br>• Les organisateurs peuvent consulter les statistiques de leurs événements.<br>• Les données de facturation permettent de calculer le chiffre d’affaires. | • Les statistiques reposent uniquement sur des inscriptions confirmées et paiements validés.<br>• Les rapports doivent être cohérents et actualisés. |
 
-### A. Catalog / Événements
-- **Responsabilité** : gérer les événements (métadonnées, statut, publication).
-- **Entités** : `Event`, `Organizer`.
-- **Règles** : transitions de statut, cohérence des dates.
-- **Événements** : `EventPublished`, `EventUpdated`.
+---
 
-### B. Sessions & Intervenants
-- **Responsabilité** : gérer le programme détaillé.
-- **Entités** : `Session`, `Speaker`.
-- **Règles** : pas de chevauchement, capacité respectée.
-- **Événements** : `ProgramChanged`.
-
-### C. Inscriptions & Capacités
-- **Responsabilité** : demandes d’inscription, listes d’attente.
-- **Entités** : `Registration`, `CapacityPolicy`.
-- **Règles** : liste d’attente, promotion automatique, annulation libère une place.
-- **Événements** : `RegistrationConfirmed`, `Waitlisted`, `PromotedFromWaitlist`.
-
-### D. Paiement
-- **Responsabilité** : paiement en ligne.
-- **Entités** : `PaymentIntent`, `Charge`.
-- **Règles** : paiement confirmé = réservation.
-- **Événements** : `PaymentSucceeded`, `PaymentFailed`.
-
-### E. Facturation & Reçus
-- **Responsabilité** : génération automatique de factures et reçus.
-- **Entités** : `Invoice`, `Receipt`.
-- **Règles** : immutabilité, numérotation légale.
-- **Événements** : `InvoiceIssued`.
-
-### F. Notifications & Emails
-- **Responsabilité** : emails et notifications ciblées.
-- **Entités** : `MessageTemplate`, `Delivery`.
-- **Événements consommés** : `RegistrationConfirmed`, `ProgramChanged`.
-- **Règles** : idempotence, filtres ciblés.
-
-### G. Statistiques & Reporting
-- **Responsabilité** : fournir les indicateurs de performance.
-- **Événements consommés** : `Registration*`, `Payment*`, `InvoiceIssued`.
+> Cette vue d’ensemble exprime les **frontières fonctionnelles** et les **relations métier** entre les différents contextes, sans mention technique (API, messages, bases de données, etc.).  
+> Elle sert de base pour comprendre le modèle conceptuel du domaine et établir un **langage commun** entre développeurs et experts métier.
 
 ---
 
